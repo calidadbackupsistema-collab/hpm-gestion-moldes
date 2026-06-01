@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Checklist de Molde | Hyundai Polytech Mexico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<style>
+:root {
+  --bg:      #F5F6FA;
+  --bg2:     #FFFFFF;
+  --bg3:     #F0F2F7;
+  --border:  #E2E5EE;
+  --border2: #C8CDD8;
+  --text:    #1A1D28;
+  --text2:   #5A6178;
+  --text3:   #9AA0B5;
+  --accent:  #005BAC;
+  --accent2: #0075E2;
+  --green:   #1D9E75;
+  --amber:   #EF9F27;
+  --red:     #E24B4A;
+  --purple:  #7F77DD;
+  --gray:    #888780;
+  --radius:  14px;
+  --radius-sm: 10px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Barlow', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 15px;
+}
+
+/* HEADER */
+.header {
+  background: var(--accent);
+  padding: 0 20px;
+  height: 60px;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.header-logo {
+  display: flex; align-items: center; gap: 10px;
+}
+.logo-badge {
+  width: 36px; height: 36px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 13px; color: white;
+}
+.header h1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 17px; font-weight: 700;
+  color: white; letter-spacing: 0.5px;
+}
+.header-sub { font-size: 11px; color: rgba(255,255,255,0.7); }
+
+/* CONTENT */
+.container { max-width: 680px; margin: 0 auto; padding: 20px 16px 40px; }
+
+/* MOLD INFO CARD */
+.mold-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.mold-card::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 4px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+}
+.mold-header {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 12px;
+}
+.mold-code {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px; font-weight: 600; color: var(--accent);
+  background: rgba(0,91,172,0.08);
+  padding: 2px 10px; border-radius: 20px;
+  border: 1px solid rgba(0,91,172,0.2);
+}
+.mold-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px; font-weight: 700;
+  color: var(--text); line-height: 1.2;
+  margin: 8px 0 4px;
+}
+.mold-part { font-size: 13px; color: var(--text2); }
+
+.info-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 10px; margin-top: 14px;
+}
+.info-item {
+  background: var(--bg3);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+.info-label { font-size: 10px; color: var(--text3); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+.info-value { font-size: 14px; font-weight: 600; margin-top: 2px; }
+
+/* LIFE BAR */
+.life-section { margin-top: 14px; }
+.life-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.life-label { font-size: 12px; color: var(--text2); font-weight: 500; }
+.life-pct { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; }
+.life-bar-bg { background: var(--bg3); border-radius: 8px; height: 8px; overflow: hidden; }
+.life-bar-fill { height: 100%; border-radius: 8px; transition: width 0.5s ease; }
+
+/* SECTION */
+.section-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.section-title {
+  display: flex; align-items: center; gap: 8px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 17px; font-weight: 700;
+  color: var(--text); margin-bottom: 16px;
+}
+.section-title i { font-size: 20px; color: var(--accent); }
+
+/* ALARM BUTTONS */
+.alarm-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.alarm-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 16px 10px; border-radius: var(--radius-sm);
+  border: 2px solid transparent; cursor: pointer;
+  text-align: center; transition: all 0.18s;
+  background: var(--bg3); font-family: 'Barlow', sans-serif;
+}
+.alarm-btn:hover, .alarm-btn.selected {
+  border-color: currentColor;
+  background: var(--bg2);
+}
+.alarm-btn i { font-size: 26px; }
+.alarm-btn span { font-size: 12px; font-weight: 600; line-height: 1.3; }
+.alarm-dano     { color: var(--red); }
+.alarm-urgente  { color: var(--amber); }
+.alarm-vida     { color: var(--purple); }
+.alarm-obsoleto { color: var(--gray); }
+.alarm-otro     { color: var(--accent2); }
+.alarm-btn.selected { background: rgba(0,0,0,0.04); }
+
+/* CAUSE INPUT */
+.cause-section {
+  margin-top: 14px;
+  display: none;
+}
+.cause-section.visible { display: block; }
+
+/* FORM */
+.form-group { margin-bottom: 14px; }
+.form-label {
+  display: block; font-size: 12px; font-weight: 600;
+  color: var(--text2); margin-bottom: 6px; letter-spacing: 0.3px;
+}
+.form-control {
+  width: 100%; background: var(--bg3);
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text); padding: 10px 14px;
+  font-size: 14px; font-family: 'Barlow', sans-serif;
+  outline: none; transition: border-color 0.15s;
+}
+.form-control:focus { border-color: var(--accent2); background: white; }
+.form-control::placeholder { color: var(--text3); }
+select.form-control { cursor: pointer; }
+textarea.form-control { resize: vertical; }
+
+/* CHECKLIST ITEMS */
+.check-list { display: flex; flex-direction: column; gap: 6px; }
+.check-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg3); border-radius: var(--radius-sm);
+  padding: 12px 14px; cursor: pointer;
+  transition: background 0.12s; border: 1.5px solid transparent;
+}
+.check-item.checked { background: rgba(29,158,117,0.06); border-color: rgba(29,158,117,0.25); }
+.check-item.bad     { background: rgba(226,75,74,0.06); border-color: rgba(226,75,74,0.25); }
+.check-box {
+  width: 22px; height: 22px;
+  border: 2px solid var(--border2); border-radius: 6px;
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.check-item.checked .check-box { background: var(--green); border-color: var(--green); color: white; }
+.check-item.bad .check-box { background: var(--red); border-color: var(--red); color: white; }
+.check-box i { font-size: 14px; display: none; }
+.check-item.checked .check-box i.ok-icon { display: block; }
+.check-item.bad .check-box i.bad-icon { display: block; }
+
+.check-text { flex: 1; }
+.check-main { font-size: 14px; font-weight: 500; }
+.check-sub  { font-size: 11px; color: var(--text2); margin-top: 1px; }
+
+.check-options {
+  display: flex; gap: 6px;
+}
+.check-opt {
+  padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
+  cursor: pointer; border: 1.5px solid var(--border2);
+  background: white; transition: all 0.12s; font-family: 'Barlow', sans-serif;
+}
+.check-opt.ok-opt:hover, .check-opt.ok-opt.sel { background: var(--green); color: white; border-color: var(--green); }
+.check-opt.bad-opt:hover, .check-opt.bad-opt.sel { background: var(--red); color: white; border-color: var(--red); }
+.check-opt.na-opt:hover, .check-opt.na-opt.sel { background: var(--text3); color: white; border-color: var(--text3); }
+
+/* SUBMIT BUTTON */
+.submit-btn {
+  width: 100%; padding: 16px;
+  background: var(--accent); color: white;
+  border: none; border-radius: var(--radius-sm);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px; font-weight: 700; letter-spacing: 1px;
+  cursor: pointer; transition: background 0.18s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.submit-btn:hover { background: var(--accent2); }
+.submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.export-btn {
+  width: 100%; padding: 13px;
+  background: var(--bg2); color: var(--green);
+  border: 2px solid var(--green); border-radius: var(--radius-sm);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px; font-weight: 700; letter-spacing: 0.5px;
+  cursor: pointer; transition: all 0.18s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-top: 10px;
+}
+.export-btn:hover { background: var(--green); color: white; }
+
+/* LOADING */
+.page-loading {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 80px 24px; gap: 16px;
+}
+.page-loading .spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* SUCCESS */
+.success-screen {
+  display: none;
+  text-align: center; padding: 40px 24px;
+}
+.success-screen.visible { display: block; }
+.success-icon {
+  width: 80px; height: 80px;
+  background: rgba(29,158,117,0.1);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px;
+  font-size: 40px; color: var(--green);
+}
+
+/* STATUS BADGES */
+.status-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 12px; border-radius: 20px;
+  font-size: 12px; font-weight: 600;
+}
+.pill-green  { background: rgba(29,158,117,0.12); color: var(--green); }
+.pill-red    { background: rgba(226,75,74,0.12);  color: var(--red); }
+.pill-amber  { background: rgba(239,159,39,0.12); color: var(--amber); }
+.pill-gray   { background: rgba(136,135,128,0.12);color: var(--gray); }
+
+/* ALERT BOX */
+.alert-box {
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 13px;
+  display: flex; align-items: flex-start; gap: 10px;
+  margin-bottom: 16px;
+}
+.alert-warning { background: rgba(239,159,39,0.10); border: 1.5px solid rgba(239,159,39,0.3); color: #854F0B; }
+.alert-danger  { background: rgba(226,75,74,0.10);  border: 1.5px solid rgba(226,75,74,0.3);  color: #A32D2D; }
+.alert-info    { background: rgba(0,91,172,0.07);   border: 1.5px solid rgba(0,91,172,0.2);   color: var(--accent); }
+
+/* OBSERVATION HISTORY */
+.obs-item {
+  background: var(--bg3); border-radius: var(--radius-sm);
+  padding: 12px 14px; margin-bottom: 8px;
+  border-left: 3px solid var(--border2);
+}
+.obs-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.obs-by { font-size: 12px; font-weight: 600; }
+.obs-date { font-size: 11px; color: var(--text2); }
+.obs-text { font-size: 13px; color: var(--text2); }
+
+@media (max-width: 480px) {
+  .info-grid { grid-template-columns: repeat(2, 1fr); }
+  .alarm-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-logo">
+    <div class="logo-badge">HPM</div>
+    <div>
+      <div class="header h1" style="font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;color:white;letter-spacing:0.5px;">CHECKLIST DE MOLDE</div>
+      <div class="header-sub">Hyundai Polytech Mexico</div>
+    </div>
+  </div>
+  <button onclick="exportChecklist()" style="background:rgba(255,255,255,0.15);border:none;color:white;border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:'Barlow',sans-serif;font-weight:500;">
+    <i class="ti ti-file-spreadsheet"></i> Excel
+  </button>
+</header>
+
+<div class="container">
+
+  <!-- ESTADO DE CARGA -->
+  <div id="loading-state" class="page-loading">
+    <div class="spinner"></div>
+    <p style="color:var(--text2);font-size:14px;">Cargando información del molde...</p>
+  </div>
+
+  <!-- ERROR -->
+  <div id="error-state" style="display:none;text-align:center;padding:60px 24px;">
+    <i class="ti ti-qrcode-off" style="font-size:56px;color:var(--text3);display:block;margin-bottom:16px;"></i>
+    <div style="font-size:18px;font-weight:700;margin-bottom:8px;">Molde no encontrado</div>
+    <div style="color:var(--text2);font-size:14px;margin-bottom:24px;">El código QR escaneado no corresponde a ningún molde registrado en el sistema.</div>
+    <a href="dashboard.html" style="background:var(--accent);color:white;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;font-family:'Barlow Condensed',sans-serif;font-size:16px;">
+      Ir al Dashboard
+    </a>
+  </div>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <div id="main-content" style="display:none">
+
+    <!-- INFO DEL MOLDE -->
+    <div class="mold-card">
+      <div class="mold-header">
+        <div>
+          <span class="mold-code" id="mold-code">—</span>
+          <div class="mold-name" id="mold-name">—</div>
+          <div class="mold-part" id="mold-part">—</div>
+        </div>
+        <div id="mold-status-pill"></div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">Material</div>
+          <div class="info-value" id="mold-material">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Zona</div>
+          <div class="info-value" id="mold-zone">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Posición</div>
+          <div class="info-value" id="mold-pos">—</div>
+        </div>
+      </div>
+
+      <div class="life-section">
+        <div class="life-header">
+          <span class="life-label"><i class="ti ti-activity" style="margin-right:4px;vertical-align:-2px"></i>Vida Útil del Molde</span>
+          <span class="life-pct" id="life-pct">—</span>
+        </div>
+        <div class="life-bar-bg">
+          <div class="life-bar-fill" id="life-bar" style="width:0%"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;">
+          <span style="font-size:11px;color:var(--text2);">Shots: <strong id="cur-shots">—</strong></span>
+          <span style="font-size:11px;color:var(--text2);">Máx: <strong id="max-shots">—</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALERTAS ACTIVAS -->
+    <div id="active-alarms-box" style="display:none">
+      <div class="alert-box alert-danger">
+        <i class="ti ti-alert-triangle" style="font-size:18px;margin-top:1px;flex-shrink:0"></i>
+        <div>
+          <strong>Alarmas Activas en este Molde:</strong>
+          <div id="active-alarms-list" style="margin-top:4px;font-size:12px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIDA CRÍTICA -->
+    <div id="life-warning-box" style="display:none">
+      <div class="alert-box alert-warning">
+        <i class="ti ti-clock-off" style="font-size:18px;margin-top:1px;flex-shrink:0"></i>
+        <div><strong>Tiempo de Vida Crítico.</strong> Este molde ha superado el 90% de su vida útil. Programa mantenimiento mayor.</div>
+      </div>
+    </div>
+
+    <!-- ═══ SECCIÓN: DETONAR ALARMA ═══ -->
+    <div class="section-card">
+      <div class="section-title"><i class="ti ti-alert-triangle"></i>Detonar Alarma</div>
+
+      <div class="form-group" style="margin-bottom:12px;">
+        <div class="form-label">Tipo de Alarma</div>
+        <div class="alarm-grid">
+          <button class="alarm-btn alarm-dano"     onclick="selectAlarm('dano',this)">
+            <i class="ti ti-hammer"></i><span>Daño en Molde</span>
+          </button>
+          <button class="alarm-btn alarm-urgente"  onclick="selectAlarm('urgente',this)">
+            <i class="ti ti-tool"></i><span>Mantenimiento Urgente</span>
+          </button>
+          <button class="alarm-btn alarm-vida"     onclick="selectAlarm('vida',this)">
+            <i class="ti ti-clock-off"></i><span>Tiempo de Vida Expirado</span>
+          </button>
+          <button class="alarm-btn alarm-obsoleto" onclick="selectAlarm('obsoleto',this)">
+            <i class="ti ti-archive"></i><span>Molde Obsoleto</span>
+          </button>
+          <button class="alarm-btn alarm-otro"     onclick="selectAlarm('otro',this)" style="grid-column:1/-1">
+            <i class="ti ti-info-circle"></i><span>Otro</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="cause-section" id="alarm-cause-section">
+        <div class="form-group">
+          <label class="form-label">Descripción de la Causa *</label>
+          <textarea class="form-control" id="alarm-cause" rows="3"
+            placeholder="Describe el daño, falla o motivo de la alarma con detalle..." maxlength="600"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Registrado por</label>
+          <input class="form-control" id="alarm-by" placeholder="Nombre del responsable" maxlength="80">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Departamento</label>
+          <select class="form-control" id="alarm-dept">
+            <option value="">Seleccionar...</option>
+            <option value="procesos">Ing. de Procesos</option>
+            <option value="calidad">Ing. de Calidad</option>
+            <option value="produccion">Supervisor de Producción</option>
+            <option value="mantenimiento">Mantenimiento</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <button class="submit-btn" style="background:var(--red);" onclick="submitAlarm()">
+          <i class="ti ti-alert-triangle"></i> REGISTRAR ALARMA
+        </button>
+      </div>
+    </div>
+
+    <!-- ═══ SECCIÓN: CHECKLIST VISUAL ═══ -->
+    <div class="section-card">
+      <div class="section-title"><i class="ti ti-clipboard-list"></i>Checklist de Inspección</div>
+
+      <div class="check-list" id="checklist-items">
+        <!-- Generado dinámicamente -->
+      </div>
+
+      <div class="form-group" style="margin-top:16px;">
+        <label class="form-label">Observaciones Generales</label>
+        <textarea class="form-control" id="check-observations" rows="3"
+          placeholder="Anota cualquier observación relevante de la inspección..." maxlength="600"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Inspeccionado por</label>
+        <input class="form-control" id="check-by" placeholder="Nombre del inspector" maxlength="80">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Departamento</label>
+        <select class="form-control" id="check-dept">
+          <option value="">Seleccionar...</option>
+          <option value="procesos">Ing. de Procesos</option>
+          <option value="calidad">Ing. de Calidad</option>
+          <option value="produccion">Supervisor de Producción</option>
+          <option value="mantenimiento">Mantenimiento</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+
+      <button class="submit-btn" id="btn-submit-check" onclick="submitChecklist()">
+        <i class="ti ti-device-floppy"></i> GUARDAR CHECKLIST
+      </button>
+      <button class="export-btn" onclick="exportChecklist()">
+        <i class="ti ti-file-spreadsheet"></i> EXPORTAR A EXCEL
+      </button>
+    </div>
+
+    <!-- ═══ HISTORIAL DE OBSERVACIONES ═══ -->
+    <div class="section-card" id="history-section" style="display:none">
+      <div class="section-title"><i class="ti ti-history"></i>Historial Reciente</div>
+      <div id="history-list"></div>
+    </div>
+
+  </div>
+
+  <!-- ÉXITO -->
+  <div id="success-screen" class="success-screen">
+    <div class="success-icon"><i class="ti ti-circle-check"></i></div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:700;color:var(--text)">¡Registrado Exitosamente!</div>
+    <div id="success-message" style="color:var(--text2);margin:8px 0 24px;font-size:14px;"></div>
+    <button onclick="resetForm()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:12px 28px;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;cursor:pointer;">
+      Nueva Inspección
+    </button>
+    <br><br>
+    <a href="dashboard.html" style="color:var(--accent2);font-size:14px;font-weight:500;">
+      <i class="ti ti-layout-dashboard"></i> Ir al Dashboard
+    </a>
+  </div>
+
+</div>
+
+<!-- Scripts -->
+<script src="js/firebase-config.js"></script>
+<script src="js/utils.js"></script>
+<script>
+// CHECKLIST ITEMS — personalizados para moldes de inyección
+const CHECKLIST_ITEMS = [
+  { id: 'c01', main: 'Estado general del molde',          sub: 'Golpes, rayaduras, deformaciones visibles',      group: 'Inspección Visual' },
+  { id: 'c02', main: 'Estado de cavidades',               sub: 'Sin oxido, daño o desgaste en superficies',      group: 'Inspección Visual' },
+  { id: 'c03', main: 'Guías y columnas',                  sub: 'Sin desgaste excesivo, correctamente lubricadas', group: 'Mecánico' },
+  { id: 'c04', main: 'Sistema de expulsión',              sub: 'Expulsores en posición, sin daño o bloqueo',      group: 'Mecánico' },
+  { id: 'c05', main: 'Canales de enfriamiento',           sub: 'Sin obstrucciones, conexiones en buen estado',    group: 'Mecánico' },
+  { id: 'c06', main: 'Sellos y juntas (O-rings)',         sub: 'Sin fugas visibles o deterioro',                  group: 'Mecánico' },
+  { id: 'c07', main: 'Centros de colada (Sprue/Runner)',  sub: 'Sin acumulación de material, bien dimensionados', group: 'Material' },
+  { id: 'c08', main: 'Superficie de cierre (Parting line)',sub: 'Sin rebabas, desgaste o daño en zona de cierre', group: 'Material' },
+  { id: 'c09', main: 'Tornillería y sujeciones',          sub: 'Apretados, sin corrosión ni faltantes',           group: 'Mecánico' },
+  { id: 'c10', main: 'Marcas y placas de identificación', sub: 'Legibles y en su lugar',                          group: 'Inspección Visual' },
+  { id: 'c11', main: 'Limpieza general del molde',        sub: 'Sin residuos de material, grasa o suciedad',      group: 'Limpieza' },
+  { id: 'c12', main: 'Lubricación de partes móviles',     sub: 'Correctamente lubricadas según plan de mto.',     group: 'Mecánico' },
+];
+
+let moldData       = null;
+let moldId         = null;
+let db             = null;
+let selectedAlarm  = null;
+let checkResults   = {};
+let moldsAlarms    = [];
+let checkHistory   = [];
+
+// LEER PARÁMETRO ?id=
+const params = new URLSearchParams(window.location.search);
+moldId = params.get('id');
+
+// INIT
+try {
+  firebase.initializeApp(window.HPM_CONFIG.firebase);
+  db = firebase.firestore();
+  if (moldId) {
+    loadMold();
+  } else {
+    showDemoMode();
+  }
+} catch(e) {
+  console.warn('Firebase no configurado');
+  showDemoMode();
+}
+
+async function loadMold() {
+  try {
+    const doc = await db.collection('moldes').doc(moldId).get();
+    if (!doc.exists) { showError(); return; }
+    moldData = { id: doc.id, ...doc.data() };
+    await loadMoldAlarms();
+    await loadCheckHistory();
+    renderMoldInfo();
+    renderChecklist();
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('main-content').style.display  = 'block';
+  } catch(e) {
+    console.error(e);
+    showError();
+  }
+}
+
+async function loadMoldAlarms() {
+  try {
+    const snap = await db.collection('alarmas')
+      .where('moldId', '==', moldId)
+      .where('status', '==', 'activa')
+      .get();
+    moldsAlarms = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (moldsAlarms.length) {
+      document.getElementById('active-alarms-box').style.display = 'block';
+      document.getElementById('active-alarms-list').innerHTML =
+        moldsAlarms.map(a => {
+          const cfg = window.HPM_CONFIG.alarmTypes[a.type] || {};
+          return `• ${cfg.label || a.type}${a.cause ? ': ' + a.cause : ''}`;
+        }).join('<br>');
+    }
+  } catch(e) {}
+}
+
+async function loadCheckHistory() {
+  try {
+    const snap = await db.collection('checklists')
+      .where('moldId', '==', moldId)
+      .orderBy('createdAt', 'desc')
+      .limit(3)
+      .get();
+    checkHistory = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (checkHistory.length) {
+      document.getElementById('history-section').style.display = 'block';
+      document.getElementById('history-list').innerHTML = checkHistory.map(h => `
+        <div class="obs-item">
+          <div class="obs-header">
+            <span class="obs-by">${h.inspectedBy || '—'} (${h.department || ''})</span>
+            <span class="obs-date">${Utils.formatDate(h.createdAt)}</span>
+          </div>
+          <div class="obs-text">${h.observations || '(Sin observaciones)'}</div>
+        </div>`).join('');
+    }
+  } catch(e) {}
+}
+
+function showError() {
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('error-state').style.display   = 'block';
+}
+
+function showDemoMode() {
+  moldId = 'HPM-DEMO-001';
+  moldData = {
+    id: 'HPM-DEMO-001', code: 'MOL-001',
+    name: 'Bumper Delantero HM1', partNumber: '87611-4L000',
+    material: 'PP+EPDM', zone: 'activos', rackPosition: 'A-01',
+    maxShots: 500000, currentShots: 320000, status: 'bueno'
+  };
+  renderMoldInfo();
+  renderChecklist();
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('main-content').style.display  = 'block';
+}
+
+function renderMoldInfo() {
+  const m = moldData;
+  document.getElementById('mold-code').textContent   = m.code || '—';
+  document.getElementById('mold-name').textContent   = m.name || '—';
+  document.getElementById('mold-part').textContent   = m.partNumber || '';
+  document.getElementById('mold-material').textContent = m.material || '—';
+  document.getElementById('mold-zone').textContent   = window.HPM_CONFIG.rackZones[m.zone||'activos']?.label || '—';
+  document.getElementById('mold-pos').textContent    = m.rackPosition || '—';
+
+  const pct      = Utils.lifePercent(m.currentShots||0, m.maxShots||0);
+  const barColor = pct >= 90 ? 'var(--red)' : pct >= 70 ? 'var(--amber)' : 'var(--green)';
+  document.getElementById('life-pct').textContent    = pct + '%';
+  document.getElementById('life-pct').style.color    = barColor;
+  document.getElementById('life-bar').style.width    = pct + '%';
+  document.getElementById('life-bar').style.background = barColor;
+  document.getElementById('cur-shots').textContent   = Utils.formatNumber(m.currentShots||0);
+  document.getElementById('max-shots').textContent   = Utils.formatNumber(m.maxShots||0);
+
+  if (pct >= 90) document.getElementById('life-warning-box').style.display = 'block';
+
+  // Status pill
+  const statusCfg = window.HPM_CONFIG.moldStatus[m.status||'bueno'];
+  const pillClass = { bueno:'pill-green', alarma:'pill-amber', scrap:'pill-red', obsoleto:'pill-gray' }[m.status||'bueno'];
+  document.getElementById('mold-status-pill').innerHTML =
+    `<span class="status-pill ${pillClass}"><i class="ti ${statusCfg?.icon}"></i>${statusCfg?.label}</span>`;
+
+  document.title = `Checklist: ${m.code} — ${m.name} | HPM`;
+}
+
+function renderChecklist() {
+  const container = document.getElementById('checklist-items');
+  let currentGroup = '';
+  let html = '';
+  CHECKLIST_ITEMS.forEach(item => {
+    if (item.group !== currentGroup) {
+      currentGroup = item.group;
+      html += `<div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);padding:10px 0 4px;">${currentGroup}</div>`;
+    }
+    html += `
+      <div class="check-item" id="ci-${item.id}" onclick="">
+        <div class="check-box">
+          <i class="ti ti-check ok-icon"></i>
+          <i class="ti ti-x bad-icon"></i>
+        </div>
+        <div class="check-text">
+          <div class="check-main">${item.main}</div>
+          <div class="check-sub">${item.sub}</div>
+        </div>
+        <div class="check-options">
+          <button class="check-opt ok-opt"  onclick="setCheck('${item.id}','ok',event)">✓ OK</button>
+          <button class="check-opt bad-opt" onclick="setCheck('${item.id}','bad',event)">✗ Mal</button>
+          <button class="check-opt na-opt"  onclick="setCheck('${item.id}','na',event)">N/A</button>
+        </div>
+      </div>`;
+    checkResults[item.id] = null;
+  });
+  container.innerHTML = html;
+}
+
+function setCheck(id, val, e) {
+  e.stopPropagation();
+  checkResults[id] = val;
+  const row = document.getElementById(`ci-${id}`);
+  row.classList.remove('checked','bad');
+  row.querySelectorAll('.check-opt').forEach(b => b.classList.remove('sel'));
+  if (val === 'ok')  { row.classList.add('checked'); row.querySelector('.ok-opt').classList.add('sel'); }
+  if (val === 'bad') { row.classList.add('bad');     row.querySelector('.bad-opt').classList.add('sel'); }
+  if (val === 'na')  { row.querySelector('.na-opt').classList.add('sel'); }
+}
+
+// ALARMA
+function selectAlarm(type, btn) {
+  document.querySelectorAll('.alarm-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedAlarm = type;
+  const section = document.getElementById('alarm-cause-section');
+  section.classList.add('visible');
+}
+
+async function submitAlarm() {
+  if (!selectedAlarm) { Utils.showToast('Selecciona el tipo de alarma', 'warning'); return; }
+  const cause = document.getElementById('alarm-cause').value.trim();
+  const by    = document.getElementById('alarm-by').value.trim();
+  const dept  = document.getElementById('alarm-dept').value;
+  if (!cause) { Utils.showToast('Describe la causa de la alarma', 'warning'); return; }
+  if (!by)    { Utils.showToast('Ingresa el nombre del responsable', 'warning'); return; }
+
+  const alarm = {
+    moldId, moldCode: moldData.code, moldName: moldData.name,
+    type: selectedAlarm,
+    cause: Utils.sanitize(cause),
+    registeredBy: Utils.sanitize(by),
+    department: dept,
+    status: 'activa',
+    createdAt: db ? firebase.firestore.FieldValue.serverTimestamp() : new Date().toISOString()
+  };
+
+  if (db) {
+    try {
+      const batch = db.batch();
+      const alarmRef = db.collection('alarmas').doc();
+      batch.set(alarmRef, alarm);
+      batch.update(db.collection('moldes').doc(moldId), { status: 'alarma' });
+      await batch.commit();
+    } catch(e) { Utils.showToast('Error: ' + e.message, 'error'); return; }
+  }
+
+  document.getElementById('success-message').textContent =
+    `Alarma "${window.HPM_CONFIG.alarmTypes[selectedAlarm]?.label}" registrada. El área de mantenimiento ha sido notificada.`;
+  showSuccess();
+}
+
+async function submitChecklist() {
+  const by   = document.getElementById('check-by').value.trim();
+  const dept = document.getElementById('check-dept').value;
+  const obs  = document.getElementById('check-observations').value.trim();
+  if (!by)   { Utils.showToast('Ingresa tu nombre', 'warning'); return; }
+
+  const allAnswered = CHECKLIST_ITEMS.every(i => checkResults[i.id] !== null);
+  if (!allAnswered) {
+    const pending = CHECKLIST_ITEMS.filter(i => checkResults[i.id] === null).length;
+    if (!confirm(`Faltan ${pending} ítems por evaluar. ¿Guardar de todas formas?`)) return;
+  }
+
+  const itemsBad = CHECKLIST_ITEMS.filter(i => checkResults[i.id] === 'bad').map(i => i.main);
+  const record = {
+    moldId, moldCode: moldData.code, moldName: moldData.name,
+    inspectedBy: Utils.sanitize(by), department: dept,
+    observations: Utils.sanitize(obs),
+    results: checkResults,
+    itemsFailed: itemsBad,
+    failCount: itemsBad.length,
+    shift: Utils.getCurrentShift(),
+    createdAt: db ? firebase.firestore.FieldValue.serverTimestamp() : new Date().toISOString()
+  };
+
+  if (db) {
+    try {
+      await db.collection('checklists').add(record);
+    } catch(e) { Utils.showToast('Error al guardar: ' + e.message, 'error'); return; }
+  }
+
+  const msg = itemsBad.length > 0
+    ? `Checklist guardado. ${itemsBad.length} ítem(s) con observaciones.`
+    : 'Checklist guardado. Molde en buenas condiciones.';
+  document.getElementById('success-message').textContent = msg;
+  showSuccess();
+}
+
+function showSuccess() {
+  document.getElementById('main-content').style.display = 'none';
+  document.getElementById('success-screen').classList.add('visible');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetForm() {
+  document.getElementById('success-screen').classList.remove('visible');
+  document.getElementById('main-content').style.display = 'block';
+  selectedAlarm = null;
+  checkResults = {};
+  document.querySelectorAll('.alarm-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('alarm-cause-section').classList.remove('visible');
+  document.getElementById('alarm-cause').value = '';
+  document.getElementById('alarm-by').value    = '';
+  document.getElementById('check-by').value    = '';
+  document.getElementById('check-observations').value = '';
+  renderChecklist();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// EXPORTAR EXCEL
+function exportChecklist() {
+  if (!moldData) { Utils.showToast('No hay datos para exportar', 'warning'); return; }
+  if (typeof XLSX === 'undefined') { Utils.showToast('Librería no disponible', 'error'); return; }
+
+  const wb = XLSX.utils.book_new();
+
+  // Hoja 1: Info del Molde
+  const infoData = [
+    { Campo: 'Código',         Valor: moldData.code },
+    { Campo: 'Nombre',         Valor: moldData.name },
+    { Campo: 'No. de Parte',   Valor: moldData.partNumber },
+    { Campo: 'Material',       Valor: moldData.material },
+    { Campo: 'Zona Rack',      Valor: window.HPM_CONFIG.rackZones[moldData.zone||'activos']?.label },
+    { Campo: 'Posición',       Valor: moldData.rackPosition },
+    { Campo: 'Shots Actuales', Valor: moldData.currentShots },
+    { Campo: 'Shots Máximos',  Valor: moldData.maxShots },
+    { Campo: '% Vida Útil',    Valor: Utils.lifePercent(moldData.currentShots||0, moldData.maxShots||0) + '%' },
+    { Campo: 'Estado',         Valor: window.HPM_CONFIG.moldStatus[moldData.status||'bueno']?.label },
+    { Campo: 'Fecha Checklist', Valor: new Date().toLocaleString('es-MX') },
+    { Campo: 'Turno',          Valor: Utils.getCurrentShift() },
+    { Campo: 'Inspeccionado por', Valor: document.getElementById('check-by')?.value || '—' },
+    { Campo: 'Departamento',   Valor: document.getElementById('check-dept')?.value || '—' },
+    { Campo: 'Observaciones',  Valor: document.getElementById('check-observations')?.value || '—' },
+  ];
+
+  // Hoja 2: Resultados del Checklist
+  const checkData = CHECKLIST_ITEMS.map(item => ({
+    'Ítem': item.main,
+    'Descripción': item.sub,
+    'Grupo': item.group,
+    'Resultado': checkResults[item.id] === 'ok' ? 'OK' : checkResults[item.id] === 'bad' ? 'NO CONFORME' : checkResults[item.id] === 'na' ? 'N/A' : 'Sin evaluar'
+  }));
+
+  // Hoja 3: Alarmas activas
+  const alarmData = moldsAlarms.map(a => ({
+    'Tipo': window.HPM_CONFIG.alarmTypes[a.type]?.label || a.type,
+    'Causa': a.cause,
+    'Registrado por': a.registeredBy,
+    'Departamento': a.department,
+    'Estado': a.status,
+    'Fecha': Utils.formatDate(a.createdAt)
+  }));
+
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(infoData),  'Info Molde');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(checkData), 'Checklist');
+  if (alarmData.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(alarmData), 'Alarmas');
+
+  XLSX.writeFile(wb, `Checklist_${moldData.code}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  Utils.showToast('Checklist exportado a Excel', 'success');
+}
+
+// UTILS getCurrentShift
+function getCurrentShift() { return Utils.getCurrentShift(); }
+</script>
+</body>
+</html>

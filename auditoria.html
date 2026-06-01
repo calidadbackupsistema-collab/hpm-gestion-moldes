@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Auditoría de Molde | HPM</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<style>
+:root{--acc:#005BAC;--acc2:#0075E2;--green:#1D9E75;--amber:#EF9F27;--red:#E24B4A;--purple:#7F77DD;--text:#1A1D28;--text2:#5A6178;--text3:#9AA0B5;--bg:#F0F3FA;--bg2:#FFF;--border:#E2E5EE;--r:14px;--rs:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:32px}
+.header{background:linear-gradient(135deg,#4A3CA8,#7F77DD);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header-left{display:flex;align-items:center;gap:10px}
+.back-btn{background:rgba(255,255,255,0.15);border:none;color:white;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:4px;font-family:'Barlow',sans-serif}
+.header h1{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:white}
+.header-sub{font-size:10px;color:rgba(255,255,255,0.7)}
+
+.container{max-width:700px;margin:0 auto;padding:20px 16px 32px}
+
+/* HERO */
+.audit-hero{background:white;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:16px}
+.hero-top{background:linear-gradient(135deg,#4A3CA8,#7F77DD);padding:20px 20px 14px;color:white}
+.hero-badge{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.7);margin-bottom:6px}
+.hero-name{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;line-height:1.1}
+.hero-part{font-size:13px;color:rgba(255,255,255,0.8);margin-top:4px}
+.hero-bottom{padding:16px 20px}
+
+/* LIFE GAUGE */
+.life-gauge-wrap{margin-bottom:16px}
+.life-gauge-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px}
+.life-gauge-title{font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--text2)}
+.life-gauge-pct{font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:800;line-height:1}
+.life-track{position:relative;height:14px;background:#EEF0FA;border-radius:10px;overflow:hidden;margin-bottom:6px}
+.life-fill{height:100%;border-radius:10px;transition:width 0.8s ease;position:relative}
+.life-fill::after{content:'';position:absolute;top:0;right:0;bottom:0;width:4px;background:rgba(255,255,255,0.5);border-radius:0 4px 4px 0}
+
+/* Markers on life track */
+.life-markers{display:flex;justify-content:space-between;padding:0 2px}
+.life-marker{font-size:9px;color:var(--text3);text-align:center}
+
+.life-shots-row{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:12px}
+.life-shots-cur{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;color:var(--text)}
+.life-shots-max{color:var(--text2)}
+.life-shots-rem{color:var(--green);font-weight:600}
+
+/* MINI STATS */
+.mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.mini-stat{background:var(--bg);border-radius:var(--rs);padding:12px 10px;text-align:center}
+.ms-label{font-size:9px;font-weight:700;letter-spacing:0.7px;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.ms-val{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700}
+
+/* SECTION */
+.section{background:white;border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px}
+.sec-title{display:flex;align-items:center;gap:8px;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;margin-bottom:14px;color:var(--text)}
+.sec-title i{font-size:19px}
+
+/* MTO TIMELINE */
+.mto-timeline{position:relative;padding-left:28px}
+.mto-timeline::before{content:'';position:absolute;left:9px;top:8px;bottom:8px;width:2px;background:var(--border)}
+.mto-item{position:relative;margin-bottom:14px}
+.mto-dot{position:absolute;left:-22px;top:4px;width:14px;height:14px;border-radius:50%;border:2px solid white;z-index:1}
+.mto-card{background:var(--bg);border-radius:var(--rs);padding:12px 14px;border:1px solid var(--border)}
+.mto-card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap}
+.mto-type-pill{font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;white-space:nowrap}
+.mto-date{font-size:12px;color:var(--text2);font-weight:500}
+.mto-tech{font-size:12px;color:var(--text2);margin-top:5px}
+.mto-shots{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--text2);margin-top:3px}
+.mto-obs{font-size:12px;color:var(--text2);margin-top:6px;padding-top:6px;border-top:1px solid var(--border);line-height:1.4}
+.mto-failed{margin-top:5px}
+.mto-failed-tag{display:inline-block;background:rgba(226,75,74,0.1);color:var(--red);font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;margin:2px}
+
+.empty-mto{text-align:center;padding:24px;color:var(--text3);font-size:13px}
+.empty-mto i{font-size:36px;display:block;margin-bottom:8px}
+
+/* ALARM HISTORY */
+.alarm-hist-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.alarm-hist-item:last-child{border-bottom:none}
+.alarm-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.alarm-hist-body{flex:1}
+.alarm-hist-type{font-size:13px;font-weight:600}
+.alarm-hist-cause{font-size:12px;color:var(--text2);margin-top:2px}
+.alarm-hist-meta{font-size:11px;color:var(--text3);margin-top:3px}
+.alarm-status-pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;align-self:flex-start}
+.pill-activa{background:rgba(239,159,39,0.15);color:#854F0B}
+.pill-resuelta{background:rgba(29,158,117,0.12);color:var(--green)}
+
+/* SHOTS CHART */
+.shots-chart-wrap{position:relative;height:100px;margin-bottom:8px}
+.shots-bars{display:flex;align-items:flex-end;gap:3px;height:100%;width:100%}
+.shots-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}
+.shots-bar{width:100%;border-radius:3px 3px 0 0;min-height:3px;transition:height 0.4s}
+.shots-bar-label{font-size:8px;color:var(--text3);text-align:center;writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;max-height:40px;overflow:hidden}
+
+/* NEXT MTO */
+.next-mto-box{background:rgba(0,91,172,0.05);border:1.5px solid rgba(0,91,172,0.2);border-radius:var(--rs);padding:14px 16px;display:flex;align-items:center;gap:14px}
+.next-mto-icon{font-size:28px;color:var(--acc2)}
+.next-mto-body{}
+.next-mto-label{font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--acc);margin-bottom:3px}
+.next-mto-date{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;color:var(--text)}
+.next-mto-sub{font-size:12px;color:var(--text2)}
+
+/* EXPORT BTN */
+.export-btn{width:100%;padding:13px;background:white;color:var(--purple);border:2px solid var(--purple);border-radius:var(--rs);font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.18s;margin-top:14px}
+.export-btn:hover{background:var(--purple);color:white}
+
+.loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:60px;color:var(--text2)}
+.spinner{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:480px){.mini-stats{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <button class="back-btn" onclick="history.back()"><i class="ti ti-arrow-left"></i></button>
+    <div>
+      <h1>AUDITORÍA DEL MOLDE</h1>
+      <div class="header-sub">Status Completo · Trazabilidad · HPM</div>
+    </div>
+  </div>
+  <button onclick="exportAudit()" style="background:rgba(255,255,255,0.15);border:none;color:white;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:'Barlow',sans-serif;font-weight:500">
+    <i class="ti ti-file-spreadsheet"></i> Excel
+  </button>
+</div>
+
+<div class="container">
+  <div id="loading-state" class="loading"><div class="spinner"></div> Cargando auditoría...</div>
+  <div id="main-content" style="display:none">
+
+    <!-- HERO -->
+    <div class="audit-hero">
+      <div class="hero-top">
+        <div class="hero-badge" id="h-code">—</div>
+        <div class="hero-name" id="h-name">—</div>
+        <div class="hero-part" id="h-part">—</div>
+      </div>
+      <div class="hero-bottom">
+
+        <!-- LIFE GAUGE -->
+        <div class="life-gauge-wrap">
+          <div class="life-gauge-header">
+            <div class="life-gauge-title"><i class="ti ti-activity" style="margin-right:4px;vertical-align:-2px"></i>Vida Útil del Molde</div>
+            <div>
+              <div class="life-gauge-pct" id="life-pct">0%</div>
+            </div>
+          </div>
+          <div class="life-track">
+            <div class="life-fill" id="life-fill" style="width:0%"></div>
+            <!-- zona segura 0-70 -->
+            <div style="position:absolute;left:0;top:0;height:100%;width:70%;background:transparent;border-right:1px dashed rgba(255,255,255,0.5)"></div>
+            <!-- zona precaución 70-90 -->
+            <div style="position:absolute;left:70%;top:0;height:100%;width:20%;background:transparent;border-right:1px dashed rgba(255,255,255,0.5)"></div>
+          </div>
+          <div class="life-markers">
+            <span class="life-marker">0</span>
+            <span class="life-marker">25%</span>
+            <span class="life-marker">50%</span>
+            <span class="life-marker" style="color:var(--amber)">70%⚠</span>
+            <span class="life-marker" style="color:var(--red)">90%🔴</span>
+            <span class="life-marker">100%</span>
+          </div>
+          <div class="life-shots-row">
+            <div>
+              <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">Shots Actuales</div>
+              <div class="life-shots-cur" id="life-cur">—</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">Restantes</div>
+              <div class="life-shots-rem" id="life-rem">—</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">Máximo</div>
+              <div class="life-shots-max" id="life-max">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MINI STATS -->
+        <div class="mini-stats">
+          <div class="mini-stat">
+            <div class="ms-label">Estado</div>
+            <div class="ms-val" id="ms-status" style="font-size:14px">—</div>
+          </div>
+          <div class="mini-stat">
+            <div class="ms-label">Zona Rack</div>
+            <div class="ms-val" id="ms-zone" style="font-size:14px">—</div>
+          </div>
+          <div class="mini-stat">
+            <div class="ms-label">Posición</div>
+            <div class="ms-val" id="ms-pos" style="font-size:14px">—</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PRÓXIMO MANTENIMIENTO -->
+    <div class="section" id="next-mto-section" style="display:none">
+      <div class="sec-title"><i class="ti ti-calendar-event" style="color:var(--acc2)"></i>Próximo Mantenimiento Programado</div>
+      <div class="next-mto-box">
+        <i class="ti ti-calendar-check next-mto-icon"></i>
+        <div class="next-mto-body">
+          <div class="next-mto-label">Fecha programada</div>
+          <div class="next-mto-date" id="next-mto-date">—</div>
+          <div class="next-mto-sub" id="next-mto-sub">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÚLTIMOS 3 MANTENIMIENTOS -->
+    <div class="section">
+      <div class="sec-title"><i class="ti ti-history" style="color:var(--green)"></i>Últimos 3 Mantenimientos</div>
+      <div class="mto-timeline" id="mto-timeline">
+        <div class="loading" style="padding:20px"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- HISTORIAL DE SHOTS (últimas 8 corridas) -->
+    <div class="section">
+      <div class="sec-title"><i class="ti ti-chart-bar" style="color:var(--acc2)"></i>Shots por Corrida (últimas 8)</div>
+      <div class="shots-chart-wrap">
+        <div class="shots-bars" id="shots-chart"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px">Historial de producción</div>
+    </div>
+
+    <!-- ALARMAS RECIENTES -->
+    <div class="section">
+      <div class="sec-title"><i class="ti ti-alert-triangle" style="color:var(--amber)"></i>Historial de Alertas (últimas 5)</div>
+      <div id="alarm-history">
+        <div class="loading" style="padding:20px"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <button class="export-btn" onclick="exportAudit()">
+      <i class="ti ti-file-spreadsheet"></i> EXPORTAR AUDITORÍA COMPLETA
+    </button>
+
+    <div style="text-align:center;margin-top:16px">
+      <a href="mantenimiento.html?id=MOLDID" id="link-mto" style="color:var(--acc2);font-size:13px;font-weight:500;margin-right:16px">
+        <i class="ti ti-tool"></i> Registrar Mantenimiento
+      </a>
+      <a href="dashboard.html" style="color:var(--text2);font-size:13px">
+        <i class="ti ti-layout-dashboard"></i> Dashboard
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/firebase-config.js"></script>
+<script src="js/utils.js"></script>
+<script>
+let db, moldData, moldId, mtoHistory=[], alarmHistory=[], shotsHistory=[];
+const params = new URLSearchParams(window.location.search);
+moldId = params.get('id');
+
+try {
+  firebase.initializeApp(window.HPM_CONFIG.firebase);
+  db = firebase.firestore();
+  if (moldId) loadAll();
+  else demoInit();
+} catch(e) { demoInit(); }
+
+async function loadAll() {
+  try {
+    const [moldDoc, mtoSnap, alarmSnap, shotsSnap] = await Promise.all([
+      db.collection('moldes').doc(moldId).get(),
+      db.collection('mantenimientos').where('moldId','==',moldId).orderBy('createdAt','desc').limit(3).get(),
+      db.collection('alarmas').where('moldId','==',moldId).orderBy('createdAt','desc').limit(5).get(),
+      db.collection('shots').where('moldId','==',moldId).orderBy('createdAt','desc').limit(8).get()
+    ]);
+
+    if (!moldDoc.exists) { document.getElementById('loading-state').textContent='Molde no encontrado'; return; }
+    moldData    = { id: moldDoc.id, ...moldDoc.data() };
+    mtoHistory  = mtoSnap.docs.map(d=>({id:d.id,...d.data()}));
+    alarmHistory= alarmSnap.docs.map(d=>({id:d.id,...d.data()}));
+    shotsHistory= shotsSnap.docs.map(d=>({id:d.id,...d.data()})).reverse();
+
+    render();
+  } catch(e) { console.error(e); demoInit(); }
+}
+
+function demoInit() {
+  moldData = {
+    id:'HPM-DEMO-001', code:'MOL-001', name:'Bumper Delantero HM1',
+    partNumber:'87611-4L000', material:'PP+EPDM', zone:'activos', rackPosition:'A-01',
+    maxShots:500000, currentShots:320000, status:'alarma',
+    nextMtoDate:'2025-08-15'
+  };
+  mtoHistory = [
+    { id:'M1', type:'preventivo', typeLabel:'Mantenimiento Preventivo', date:'2025-04-10', technician:'Luis Hdz.', shotsAtMto:270000, duration:4, observations:'Limpieza completa, lubricación de guías. Condición general buena.', failCount:1, failedItems:['Sellos O-ring'], createdAt:new Date(Date.now()-3*30*86400000) },
+    { id:'M2', type:'reactivo',   typeLabel:'Mantenimiento Reactivo',   date:'2025-01-22', technician:'Carlos M.', shotsAtMto:180000, duration:6, observations:'Reparación de expulsor 3 doblado. Se reemplazó pieza.', failCount:2, failedItems:['Sistema de expulsión','Guías y columnas'], createdAt:new Date(Date.now()-6*30*86400000) },
+    { id:'M3', type:'preventivo', typeLabel:'Mantenimiento Preventivo', date:'2024-10-05', technician:'Ana T.',   shotsAtMto:90000,  duration:3, observations:'Inspección y limpieza rutinaria. Sin hallazgos mayores.', failCount:0, failedItems:[], createdAt:new Date(Date.now()-9*30*86400000) },
+  ];
+  alarmHistory = [
+    { id:'A1', type:'urgente',  cause:'Desgaste en cavidad 3',       registeredBy:'J. López',  department:'calidad',    status:'activa',   createdAt: new Date(Date.now()-2*86400000) },
+    { id:'A2', type:'dano',     cause:'Golpe en zona de expulsores',  registeredBy:'M. García', department:'procesos',   status:'resuelta', createdAt: new Date(Date.now()-45*86400000), resolvedAt: new Date(Date.now()-44*86400000) },
+    { id:'A3', type:'otro',     cause:'Fuga de agua en circuito 2',   registeredBy:'R. Soto',   department:'mantenimiento', status:'resuelta', createdAt: new Date(Date.now()-120*86400000) },
+  ];
+  shotsHistory = [
+    {shots:420},{shots:380},{shots:450},{shots:410},{shots:390},{shots:440},{shots:400},{shots:430}
+  ];
+  render();
+}
+
+function render() {
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('main-content').style.display  = 'block';
+
+  const m   = moldData;
+  const pct = Utils.lifePercent(m.currentShots||0, m.maxShots||0);
+  const rem = Math.max(0, (m.maxShots||0) - (m.currentShots||0));
+  const barColor = pct>=90?'#E24B4A':pct>=70?'#EF9F27':'#1D9E75';
+
+  // Hero
+  document.getElementById('h-code').textContent = m.code||'—';
+  document.getElementById('h-name').textContent = m.name||'—';
+  document.getElementById('h-part').textContent = `${m.partNumber||''} · ${m.material||''} · Proveedor: ${m.supplier||'N/D'}`;
+
+  // Life
+  document.getElementById('life-pct').textContent   = pct+'%';
+  document.getElementById('life-pct').style.color   = barColor;
+  document.getElementById('life-fill').style.width  = pct+'%';
+  document.getElementById('life-fill').style.background = barColor;
+  document.getElementById('life-cur').textContent   = Utils.formatNumber(m.currentShots||0);
+  document.getElementById('life-max').textContent   = Utils.formatNumber(m.maxShots||0);
+  document.getElementById('life-rem').textContent   = Utils.formatNumber(rem);
+  document.getElementById('life-rem').style.color   = rem < 50000 ? '#E24B4A' : rem < 100000 ? '#EF9F27' : '#1D9E75';
+
+  // Mini stats
+  const sc = window.HPM_CONFIG.moldStatus[m.status||'bueno'];
+  document.getElementById('ms-status').textContent = sc?.label||'—';
+  document.getElementById('ms-status').style.color = sc?.color||'var(--text)';
+  document.getElementById('ms-zone').textContent   = window.HPM_CONFIG.rackZones[m.zone||'activos']?.label||'—';
+  document.getElementById('ms-pos').textContent    = m.rackPosition||'—';
+
+  // Próximo MTO
+  if (m.nextMtoDate) {
+    document.getElementById('next-mto-section').style.display = 'block';
+    const nextD = new Date(m.nextMtoDate+'T12:00:00');
+    const daysTo = Math.round((nextD-Date.now())/86400000);
+    document.getElementById('next-mto-date').textContent = nextD.toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    const sub = daysTo > 0 ? `En ${daysTo} días` : daysTo === 0 ? '¡Hoy!' : `Vencido hace ${Math.abs(daysTo)} días`;
+    document.getElementById('next-mto-sub').textContent = sub;
+    document.getElementById('next-mto-sub').style.color = daysTo < 0 ? '#E24B4A' : daysTo < 7 ? '#EF9F27' : '#1D9E75';
+  }
+
+  // MTO timeline
+  renderMtoTimeline();
+
+  // Shots chart
+  renderShotsChart();
+
+  // Alarms
+  renderAlarmHistory();
+
+  // Link mantenimiento
+  document.getElementById('link-mto').href = `mantenimiento.html?id=${m.id}`;
+}
+
+function renderMtoTimeline() {
+  const container = document.getElementById('mto-timeline');
+  if (!mtoHistory.length) {
+    container.innerHTML = `<div class="empty-mto"><i class="ti ti-tool"></i>Sin registros de mantenimiento<br><span style="font-size:11px">Los mantenimientos registrados aparecerán aquí</span></div>`;
+    return;
+  }
+  const typeColors = { preventivo:'#1D9E75', reactivo:'#E24B4A', predictivo:'#378ADD', mayor:'#EF9F27', inspeccion:'#7F77DD' };
+  const typeBgs    = { preventivo:'rgba(29,158,117,0.1)', reactivo:'rgba(226,75,74,0.1)', predictivo:'rgba(55,138,221,0.1)', mayor:'rgba(239,159,39,0.1)', inspeccion:'rgba(127,119,221,0.1)' };
+
+  container.innerHTML = mtoHistory.map((mto, idx) => {
+    const col = typeColors[mto.type]||'#888';
+    const bg  = typeBgs[mto.type]||'rgba(136,135,128,0.1)';
+    const dateStr = mto.date || (mto.createdAt?.toDate ? mto.createdAt.toDate().toLocaleDateString('es-MX') : Utils.formatDateShort(mto.createdAt));
+    const failedHtml = (mto.failedItems||[]).length ?
+      `<div class="mto-failed">${(mto.failedItems||[]).map(f=>`<span class="mto-failed-tag">⚠ ${f}</span>`).join('')}</div>` : '';
+
+    return `<div class="mto-item">
+      <div class="mto-dot" style="background:${col}"></div>
+      <div class="mto-card">
+        <div class="mto-card-header">
+          <span class="mto-type-pill" style="background:${bg};color:${col}">${mto.typeLabel||mto.type}</span>
+          <span class="mto-date"><i class="ti ti-calendar" style="margin-right:3px;vertical-align:-2px"></i>${dateStr}</span>
+        </div>
+        <div class="mto-tech"><i class="ti ti-user" style="margin-right:3px;vertical-align:-2px"></i>${mto.technician||'—'}${mto.duration?` · ${mto.duration}h`:''}</div>
+        <div class="mto-shots"><i class="ti ti-activity" style="margin-right:3px;vertical-align:-2px"></i>Shots al MTO: ${Utils.formatNumber(mto.shotsAtMto||0)}</div>
+        ${mto.observations ? `<div class="mto-obs">${mto.observations}</div>` : ''}
+        ${failedHtml}
+        ${mto.failCount > 0 ? `<div style="font-size:10px;color:var(--red);font-weight:700;margin-top:5px">⚠ ${mto.failCount} no conformidad(es) encontrada(s)</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderShotsChart() {
+  const container = document.getElementById('shots-chart');
+  if (!shotsHistory.length) { container.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:20px;text-align:center;width:100%">Sin historial de corridas</div>'; return; }
+  const maxShots = Math.max(...shotsHistory.map(s=>s.shots||0));
+  container.innerHTML = shotsHistory.map((s, i) => {
+    const h = maxShots > 0 ? Math.max(4, Math.round(((s.shots||0)/maxShots)*90)) : 4;
+    const col = s.shots > (maxShots*0.8) ? '#0075E2' : '#9EB8E8';
+    const dateStr = s.date || (s.createdAt?.toDate ? s.createdAt.toDate().toLocaleDateString('es-MX',{month:'2-digit',day:'2-digit'}) : `C${i+1}`);
+    return `<div class="shots-bar-col">
+      <div class="shots-bar" style="height:${h}px;background:${col}" title="${Utils.formatNumber(s.shots||0)} shots"></div>
+      <div class="shots-bar-label">${dateStr}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderAlarmHistory() {
+  const container = document.getElementById('alarm-history');
+  if (!alarmHistory.length) {
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--green);font-size:13px"><i class="ti ti-circle-check" style="font-size:24px;display:block;margin-bottom:6px"></i>Sin historial de alarmas</div>';
+    return;
+  }
+  container.innerHTML = alarmHistory.map(a => {
+    const cfg = window.HPM_CONFIG.alarmTypes[a.type] || window.HPM_CONFIG.alarmTypes['otro'];
+    const isActive = a.status === 'activa';
+    const dateStr  = Utils.formatDate(a.createdAt);
+    return `<div class="alarm-hist-item">
+      <div class="alarm-dot" style="background:${cfg.color}"></div>
+      <div class="alarm-hist-body">
+        <div class="alarm-hist-type" style="color:${cfg.color}">${cfg.label}</div>
+        <div class="alarm-hist-cause">${a.cause||'—'}</div>
+        <div class="alarm-hist-meta">${a.registeredBy||'—'} · ${a.department||'—'} · ${dateStr}</div>
+        ${!isActive && a.correctiveActions ? `<div style="font-size:11px;color:var(--green);margin-top:3px"><i class="ti ti-check" style="margin-right:3px"></i>Acción: ${a.correctiveActions}</div>` : ''}
+      </div>
+      <span class="alarm-status-pill ${isActive?'pill-activa':'pill-resuelta'}">${isActive?'Activa':'Resuelta'}</span>
+    </div>`;
+  }).join('');
+}
+
+function exportAudit() {
+  if (!moldData) { Utils.showToast('Sin datos','warning'); return; }
+  if (typeof XLSX === 'undefined') { Utils.showToast('Librería no disponible','error'); return; }
+
+  const m = moldData;
+  const pct = Utils.lifePercent(m.currentShots||0, m.maxShots||0);
+  const sc  = window.HPM_CONFIG.moldStatus[m.status||'bueno'];
+
+  const wb = XLSX.utils.book_new();
+
+  // Hoja 1: Resumen del molde
+  const summary = [
+    {Campo:'Código',Valor:m.code},{Campo:'Nombre',Valor:m.name},{Campo:'No. Parte',Valor:m.partNumber},
+    {Campo:'Material',Valor:m.material},{Campo:'Proveedor',Valor:m.supplier||'—'},
+    {Campo:'Estado',Valor:sc?.label},{Campo:'Zona',Valor:window.HPM_CONFIG.rackZones[m.zone||'activos']?.label},
+    {Campo:'Posición Rack',Valor:m.rackPosition||'—'},
+    {Campo:'Shots Actuales',Valor:m.currentShots||0},{Campo:'Shots Máximos',Valor:m.maxShots||0},
+    {Campo:'% Vida Útil',Valor:pct+'%'},{Campo:'Shots Restantes',Valor:Math.max(0,(m.maxShots||0)-(m.currentShots||0))},
+    {Campo:'Próximo MTO',Valor:m.nextMtoDate||'—'},
+    {Campo:'Fecha de Auditoría',Valor:new Date().toLocaleString('es-MX')},
+  ];
+
+  // Hoja 2: Mantenimientos
+  const mtoData = mtoHistory.map(mto=>({
+    'Tipo':mto.typeLabel||mto.type, 'Fecha':mto.date||'—', 'Técnico':mto.technician,
+    'Duración (h)':mto.duration||0, 'Shots al MTO':mto.shotsAtMto||0,
+    'No Conformidades':mto.failCount||0, 'Ítems fallidos':(mto.failedItems||[]).join('; '),
+    'Observaciones':mto.observations||'—', 'Materiales':mto.parts||'—'
+  }));
+
+  // Hoja 3: Alarmas
+  const alarmData = alarmHistory.map(a=>({
+    'Tipo':window.HPM_CONFIG.alarmTypes[a.type]?.label||a.type,
+    'Causa':a.cause, 'Registrado por':a.registeredBy, 'Departamento':a.department,
+    'Estado':a.status, 'Acciones correctivas':a.correctiveActions||'—',
+    'Fecha':Utils.formatDate(a.createdAt)
+  }));
+
+  // Hoja 4: Shots
+  const shotsData = shotsHistory.map(s=>({
+    'Shots':s.shots, 'OK':s.ok||0, 'Rechazadas':s.rejected||0,
+    'Turno':s.shift||'—', 'Operador':s.operator||'—',
+    'Fecha':s.date||Utils.formatDate(s.createdAt)
+  }));
+
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(summary),'Resumen Molde');
+  if (mtoData.length)   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(mtoData),'Mantenimientos');
+  if (alarmData.length) XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(alarmData),'Historial Alarmas');
+  if (shotsData.length) XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(shotsData),'Shots Recientes');
+
+  XLSX.writeFile(wb,`Auditoria_${m.code}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  Utils.showToast('Auditoría exportada correctamente','success');
+}
+</script>
+</body>
+</html>
