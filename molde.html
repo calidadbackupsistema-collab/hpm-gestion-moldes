@@ -506,19 +506,19 @@ async function loadMold() {
     moldData = { id: doc.id, ...doc.data() };
 
     const snap = await db.collection('alarmas')
-      .where('docId','==',docId).where('status','==','activa').get();
+      .where('doc.id','==',doc.id).where('status','==','activa').get();
     activeAlarms = snap.docs.map(d=>({id:d.id,...d.data()}));
 
     const mtoSnap = await db.collection('mantenimientos')
-      .where('docId','==',docId).orderBy('createdAt','desc').limit(1).get();
+      .where('doc.id','==',doc.id).orderBy('createdAt','desc').limit(1).get();
     moldData._lastMto = mtoSnap.empty ? null : mtoSnap.docs[0].data();
 
     renderMold();
     show('state-main');
-  } catch(e) { console.error('Error cargando molde:', e); demoMode(); }
+  } catch(e) { console.error('Error cargando molde:', e); loadFromCatalog(); }
 }
 
-function demoMode() {
+function loadFromCatalog() {
   // Buscar el molde correcto por su ID en los datos conocidos
   const DEMO_MOLDS = {
     'MOL-001':{code:'MOL-001',name:'Reseivor NX4A #1',partNumber:'N95856300',moldPartNumber:'N9585-64000',customer:'MOBIS',program:'NX4A',product:'RESEIVOR',material:'JI-320',cavities:2},
