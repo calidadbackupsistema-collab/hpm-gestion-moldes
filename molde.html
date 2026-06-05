@@ -506,11 +506,11 @@ async function loadMold() {
     moldData = { id: doc.id, ...doc.data() };
 
     const snap = await db.collection('alarmas')
-      .where('moldId','==',moldId).where('status','==','activa').get();
+      .where('docId','==',docId).where('status','==','activa').get();
     activeAlarms = snap.docs.map(d=>({id:d.id,...d.data()}));
 
     const mtoSnap = await db.collection('mantenimientos')
-      .where('moldId','==',moldId).orderBy('createdAt','desc').limit(1).get();
+      .where('docId','==',docId).orderBy('createdAt','desc').limit(1).get();
     moldData._lastMto = mtoSnap.empty ? null : mtoSnap.docs[0].data();
 
     renderMold();
