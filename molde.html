@@ -510,7 +510,7 @@ async function loadMold() {
     activeAlarms = snap.docs.map(d=>({id:d.id,...d.data()}));
 
     const mtoSnap = await db.collection('mantenimientos')
-      .where('doc.id','==',doc.id).orderBy('createdAt','desc').limit(1).get();
+      .where('moldId','==',doc.id).orderBy('createdAt','desc').limit(1).get();
     moldData._lastMto = mtoSnap.empty ? null : mtoSnap.docs[0].data();
 
     renderMold();
